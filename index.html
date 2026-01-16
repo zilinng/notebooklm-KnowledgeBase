@@ -89,7 +89,7 @@
       <button class="btn-submit-batch" id="btnBatchApply" onclick="submitBatchRequest()">提交批次申請</button>
     </div>
 
-    <div class="topnote"> 提示：磁貼變為彩色後即可點擊進入對應的 NotebookLM 筆記本。</div>
+    <div class="topnote">💡 提示：磁貼變為彩色後即可點擊進入 NotebookLM 知識庫。</div>
 
     <div class="grid" id="tileGrid"></div>
   </div>
@@ -167,13 +167,13 @@
         await fetch(GAS_URL, {
             method: 'POST',
             body: JSON.stringify({
-                action: 'login', 
+                action: 'login', // 沿用後端 login 邏輯處理
                 employee_id: empId,
                 email: email,
                 categories: categories
             })
         });
-        alert(`已提交 ${categories.length} 項申請！管理員將會進行核准。`);
+        alert(`✅ 已提交 ${categories.length} 項申請！管理員將會進行核准。`);
         location.reload();
     } catch (e) {
         alert("申請失敗，請檢查網路連線。");
@@ -212,7 +212,7 @@
         if (currentStatus === 'approved') {
           window.open(tile.url, '_blank');
         } else if (currentStatus === 'pending') {
-          alert('審核中，請稍候。');
+          alert('⏳ 審核中，請稍候。');
         } else {
           // 單點擊也會詢問是否申請
           if(confirm(`是否申請「${tile.name}」權限？`)) {
@@ -255,4 +255,3 @@
 </script>
 </body>
 </html>
-
