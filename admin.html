@@ -2,193 +2,257 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>管理後台｜AI 知識庫審核</title>
+    <title>AI 知識庫管理後台</title>
     <style>
-        body { font-family: "Microsoft JhengHei", sans-serif; background: #f4f7f6; padding: 20px; color: #333; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        h1 { display: flex; align-items: center; justify-content: space-between; }
+        :root { --primary: #007bff; --success: #28a745; --bg: #f8fafc; --text: #334155; }
+        body { font-family: "Segoe UI", "Microsoft JhengHei", sans-serif; background: var(--bg); padding: 20px; color: var(--text); }
+        .container { max-width: 1000px; margin: 0 auto; }
         
-        /* 申請清單表格 */
-        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f8f9fa; color: #666; font-size: 13px; }
+        /* 區塊容器 */
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 30px; border: 1px solid #e2e8f0; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .section-title { font-size: 18px; font-weight: 700; margin-bottom: 15px; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+
+        /* 表格樣式 */
+        table { width: 100%; border-collapse: collapse; font-size: 15px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+        th { color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; background: #f8fafc; }
+
+        /* ✨ 按鈕放大設計 */
+        .btn { 
+            border: none; 
+            border-radius: 8px; /* 稍微方潤一點 */
+            cursor: pointer; 
+            font-size: 14px; /* 字體從 11px 加大到 14px */
+            font-weight: 700; 
+            transition: all 0.2s; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 6px; 
+            padding: 10px 22px; /* 內距加大，更好點選 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn:disabled { cursor: not-allowed; opacity: 0.6; }
+
+        .btn-pre { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .btn-pre:hover { background: var(--primary); color: white; border-color: var(--primary); }
         
-        .req-item { display: flex; align-items: center; justify-content: space-between; background: #f9f9f9; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; border: 1px solid #eee; }
-        .req-name { font-weight: bold; font-size: 14px; color: #555; }
+        .btn-reject { background: #f1f5f9; color: #64748b; }
+        .btn-reject:hover { background: #fee2e2; color: #ef4444; }
+
+        /* 階段 2：直向排列清單 */
+        .sync-list { display: flex; flex-direction: column; gap: 12px; }
+        .sync-row { 
+            display: flex; align-items: center; justify-content: space-between; 
+            background: #fff; border: 1px solid #e2e8f0; padding: 15px 20px; border-radius: 12px;
+            transition: 0.3s;
+        }
+        .sync-row.done { background: #f8fafc; border-color: #e2e8f0; opacity: 0.8; }
+        .email-text { font-family: "Cascadia Code", "Consolas", monospace; font-size: 16px; font-weight: 600; color: #334155; }
+
+        /* 二合一按鈕：複製並正式核准 */
+        .btn-copy-submit {
+            background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;
+            min-width: 160px;
+        }
+        .btn-copy-submit:hover { background: var(--success); color: white; border-color: var(--success); }
         
-        /* 按鈕群組 */
-        .btn-group { display: flex; gap: 5px; }
-        button { border: none; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-weight: bold; font-size: 12px; transition: 0.2s; }
-        .btn-ok { background: #28a745; color: white; }
-        .btn-no { background: #6c757d; color: white; }
-        .btn-refresh { background: #007bff; color: white; padding: 10px 20px; font-size: 14px; border-radius: 8px; }
-        
-        /* 當次核准暫存區：綠色強調 */
-        .session-box { background: #fff; padding: 25px; border-radius: 12px; border: 2px solid #28a745; box-shadow: 0 4px 12px rgba(40,167,69,0.1); }
-        .session-header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
-        select { padding: 10px; border-radius: 6px; border: 1px solid #ddd; flex-grow: 1; outline: none; }
-        textarea { width: 100%; height: 130px; padding: 12px; box-sizing: border-box; border-radius: 8px; border: 1px solid #28a745; font-family: monospace; background: #f4fff4; line-height: 1.6; }
-        .btn-copy-now { background: #28a745; color: white; padding: 10px 25px; border-radius: 6px; }
+        /* 已完成狀態 */
+        .btn-copy-submit.completed { 
+            background: #f1f5f9; 
+            color: #94a3b8; 
+            border: 1px solid #e2e8f0; 
+            pointer-events: none; 
+            box-shadow: none;
+        }
+
+        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 30px; border-radius: 40px; font-size: 14px; display: none; z-index: 1000; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>
-        AI 知識庫管理後台 
-        <button class="btn-refresh" onclick="fetchData()">🔄 重新整理待處理申請</button>
-    </h1>
-    
-    <table>
-        <thead>
-            <tr>
-                <th width="80">員編</th>
-                <th width="230">申請人 Email (Gmail)</th>
-                <th>待處理項目 (獨立核准/拒絕)</th>
-            </tr>
-        </thead>
-        <tbody id="mainTable">
-            <tr><td colspan="3" style="text-align:center; padding:40px;">正在讀取 Pending 申請中...</td></tr>
-        </tbody>
-    </table>
+<div id="toast">✅ 已複製 Email 並同步更新雲端</div>
 
-    <div class="session-box">
-        <div class="session-header">
-            <h3 style="color:#28a745; margin:0;">✅ 當次手動核准名單 (暫存區)</h3>
-            <select id="themeSelector" onchange="updateBufferView()">
-                <option value="">-- 請選擇主題以複製 Email --</option>
+<div class="container">
+    <div class="header">
+        <h1 style="font-size: 24px; margin: 0;">AI 知識庫管理後台</h1>
+        <button class="btn btn-reject" onclick="fetchData()" style="padding: 8px 16px;">🔄 刷新同步雲端</button>
+    </div>
+    
+    <div class="card">
+        <div class="section-title">待審核申請 (Pending)</div>
+        <table>
+            <thead>
+                <tr>
+                    <th width="120">員編</th>
+                    <th width="350">申請人 Email</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="pendingTable">
+                <tr><td colspan="3" style="text-align:center; padding:50px; color:#94a3b8;">資料載入中...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card" style="border-top: 5px solid var(--success);">
+        <div class="section-title">手動加入權限 </div>
+        <div style="margin-bottom: 20px;">
+            <select id="themeSelector" onchange="renderSyncPool()" style="padding: 12px; border-radius: 10px; border: 1px solid #ddd; width: 250px; font-size: 15px; outline: none; background: #fff;">
+                <option value="">-- 請選擇專案主題 --</option>
             </select>
-            <button class="btn-copy-now" onclick="copyBuffer()">一鍵複製當次清單</button>
-            <button style="background:#ddd; color:#333; padding:10px; border-radius:6px;" onclick="resetBuffer()">清空暫存</button>
         </div>
-        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">此處僅顯示您「本次開啟網頁後」點擊核准的人員，方便您批次貼入 NotebookLM。</p>
-        <textarea id="bufferPool" readonly placeholder="請先在上方執行核准動作..."></textarea>
+        
+        <div class="sync-list" id="syncPool">
+            <div style="text-align:center; padding:50px; color:#94a3b8;">請先選擇主題...</div>
+        </div>
     </div>
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbypQPLRhhOSN8hmkuemznLeqT6Kvnr5mVT492wZBf_omo064fFU0DWhbO54CPDX3w7B/exec"; 
-
-    // 用於紀錄當次操作核准的名單
-    let currentSessionBuffer = {}; 
-    let allThemes = [];
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwUHdJ8PkH5zdaNcSfFkzkZvcd2fTWQdQX9aUh40aPh5M0wqb_iFuOIPp03MEsaziOL/exec"; 
+    
+    let dbData = []; 
+    let themes = [];
+    let preApprovedItems = []; 
+    let completedItems = [];   
 
     async function fetchData() {
-        const table = document.getElementById('mainTable');
-        const selector = document.getElementById('themeSelector');
-        table.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:40px;">同步中...</td></tr>';
+        preApprovedItems = [];
+        completedItems = [];
+        const tbody = document.getElementById('pendingTable');
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:50px; color:#94a3b8;">連線至 Google Sheets...</td></tr>';
         
         try {
             const res = await fetch(GAS_URL + "?t=" + new Date().getTime());
-            const data = await res.json();
-            
-            // 自動偵測主題欄位
-            const systemFields = ['employee_id', 'timestamp', 'email', 'row_index'];
-            allThemes = Object.keys(data[0] || {}).filter(k => !systemFields.includes(k));
+            dbData = await res.json();
+            const sysKeys = ['employee_id', 'timestamp', 'email', 'row_index'];
+            themes = Object.keys(dbData[0] || {}).filter(k => !sysKeys.includes(k));
 
-            // 初始化暫存器
-            allThemes.forEach(t => { if(!currentSessionBuffer[t]) currentSessionBuffer[t] = []; });
-
-            // 更新下拉選單
-            const selected = selector.value;
-            selector.innerHTML = '<option value="">-- 請選擇主題以複製 Email --</option>';
-            allThemes.forEach(t => {
+            const selector = document.getElementById('themeSelector');
+            const current = selector.value;
+            selector.innerHTML = '<option value="">-- 請選擇專案主題 --</option>';
+            themes.forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = opt.textContent = t;
                 selector.appendChild(opt);
             });
-            selector.value = selected;
+            selector.value = current;
 
-            renderTable(data, allThemes);
-        } catch (e) {
-            table.innerHTML = '<tr><td colspan="3" style="color:red; text-align:center;">讀取失敗。</td></tr>';
+            renderPending();
+            renderSyncPool();
+        } catch (e) { alert("讀取失敗，請確認網路連線。"); }
+    }
+
+    function renderPending() {
+        const tbody = document.getElementById('pendingTable');
+        tbody.innerHTML = '';
+        
+        dbData.forEach(row => {
+            const currentPendings = themes.filter(t => {
+                const dbStatus = String(row[t] || "").trim().toLowerCase();
+                const isPre = preApprovedItems.some(pa => pa.row_index === row.row_index && pa.theme === t);
+                const isDone = completedItems.some(c => c.row_index === row.row_index && c.theme === t);
+                return dbStatus === 'pending' && !isPre && !isDone;
+            });
+
+            if (currentPendings.length === 0) return;
+
+            const tr = document.createElement('tr');
+            let acts = currentPendings.map(t => `
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:#f8fafc; padding:10px 15px; border-radius:10px; border:1px solid #f1f5f9;">
+                    <span style="font-weight:700; font-size:14px; color:#475569;">${t}</span>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-pre" onclick="doPreApprove(${row.row_index}, '${t}')">預審</button>
+                        <button class="btn btn-reject" onclick="doReject(${row.row_index}, '${t}')">拒絕</button>
+                    </div>
+                </div>
+            `).join('');
+            tr.innerHTML = `<td><b style="color:#1e293b; font-size:16px;">${row.employee_id}</b></td><td>${row.email}</td><td>${acts}</td>`;
+            tbody.appendChild(tr);
+        });
+        if (tbody.innerHTML === '') tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:50px; color:#94a3b8;">目前沒有待處理的申請。</td></tr>';
+    }
+
+    function doPreApprove(rowIndex, theme) {
+        const row = dbData.find(r => r.row_index === rowIndex);
+        if (row) {
+            preApprovedItems.push({ row_index: rowIndex, email: row.email, theme: theme });
+            renderPending();
+            renderSyncPool();
         }
     }
 
-    function renderTable(data, themes) {
-        const tbody = document.getElementById('mainTable');
-        tbody.innerHTML = '';
+    function renderSyncPool() {
+        const selectedTheme = document.getElementById('themeSelector').value;
+        const pool = document.getElementById('syncPool');
+        if (!selectedTheme) { pool.innerHTML = '<div style="text-align:center; padding:50px; color:#94a3b8;">請先從選單選擇專案主題...</div>'; return; }
 
-        data.forEach(row => {
-            // 只抓取狀態為 pending 的項目
-            const pendingItems = themes.filter(t => String(row[t] || "").trim().toLowerCase() === 'pending');
-            if (pendingItems.length === 0) return;
+        const dbSyncing = dbData.filter(r => String(r[selectedTheme] || "").trim().toLowerCase() === 'approved');
+        const localSyncing = preApprovedItems.filter(pa => pa.theme === selectedTheme);
+        const combined = [...dbSyncing.map(r => ({ ...r, isCompleted: false })), ...localSyncing.map(l => ({ ...l, isCompleted: false }))];
 
-            const tr = document.createElement('tr');
-            let actions = '';
-            pendingItems.forEach(theme => {
-                actions += `
-                <div class="req-item">
-                    <span class="req-name">${theme}</span>
-                    <div class="btn-group">
-                        <button class="btn-ok" onclick="handle(this, ${row.row_index}, '${row.email}', '${theme}', 'approved')">核准</button>
-                        <button class="btn-no" onclick="handle(this, ${row.row_index}, '${row.email}', '${theme}', '')">拒絕</button>
-                    </div>
-                </div>`;
-            });
-            tr.innerHTML = `<td><b>${row.employee_id}</b></td><td>${row.email}</td><td>${actions}</td>`;
-            tbody.appendChild(tr);
+        combined.forEach(item => {
+            if (completedItems.some(c => c.row_index === item.row_index && c.theme === selectedTheme)) {
+                item.isCompleted = true;
+            }
         });
 
-        if (tbody.innerHTML === '') tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:40px; color:#999;">目前無待處理項目。</td></tr>';
+        if (combined.length === 0) { pool.innerHTML = '<div style="text-align:center; padding:50px; color:var(--success); font-weight:600;">✅ 本專案撥號池已清空</div>'; return; }
+
+        pool.innerHTML = '';
+        combined.forEach(item => {
+            const div = document.createElement('div');
+            div.className = `sync-row ${item.isCompleted ? 'done' : ''}`;
+            div.innerHTML = `
+                <div class="email-text">${item.email}</div>
+                <button class="btn btn-copy-submit ${item.isCompleted ? 'completed' : ''}" 
+                        onclick="copyAndGrant(this, ${item.row_index}, '${item.email}', '${selectedTheme}')">
+                    ${item.isCompleted ? '✅ 已完成授權' : '📋 複製並核准'}
+                </button>
+            `;
+            pool.appendChild(div);
+        });
     }
 
-    // 執行核准或拒絕
-    async function handle(btn, rowIndex, email, theme, status) {
+    async function copyAndGrant(btn, rowIndex, email, theme) {
+        navigator.clipboard.writeText(email);
         btn.disabled = true;
-        const originalText = btn.textContent;
-        btn.textContent = "...";
+        btn.textContent = "⏳ 同步中...";
 
         try {
             await fetch(GAS_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                body: JSON.stringify({ action: 'approveSpecific', row_index: rowIndex, category: theme, status: status })
+                body: JSON.stringify({ action: 'approveSpecific', row_index: rowIndex, category: theme, status: 'approved' })
             });
 
-            if (status === 'approved') {
-                // 僅將「本次核准」的 Email 存入暫存區
-                if (!currentSessionBuffer[theme].includes(email)) {
-                    currentSessionBuffer[theme].push(email);
-                }
-                btn.closest('.req-item').style.background = "#e6ffed";
-                btn.textContent = "已核准";
-            } else {
-                // 拒絕後將欄位設為空，項目從列表消失
-                btn.closest('.req-item').style.background = "#f1f3f5";
-                btn.textContent = "已拒絕";
-                setTimeout(() => btn.closest('.req-item').remove(), 1000);
-            }
-            updateBufferView();
+            completedItems.push({ row_index: rowIndex, theme: theme });
+            showToast(`已複製並同步核准: ${email}`);
+            renderSyncPool();
+            
         } catch (e) {
-            alert('操作失敗');
+            alert("同步失敗，請檢查網路連線後重試。");
             btn.disabled = false;
-            btn.textContent = originalText;
+            btn.textContent = "📋 複製並核准";
         }
     }
 
-    // 更新暫存區文字框 (換行區分)
-    function updateBufferView() {
-        const theme = document.getElementById('themeSelector').value;
-        const pool = document.getElementById('bufferPool');
-        if (!theme) { pool.value = ""; return; }
-        pool.value = currentSessionBuffer[theme].join('\n');
+    async function doReject(rowIndex, theme) {
+        if(!confirm("確定要拒絕此項申請嗎？")) return;
+        try {
+            await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'approveSpecific', row_index: rowIndex, category: theme, status: '' }) });
+            fetchData();
+        } catch (e) { alert("操作失敗"); }
     }
 
-    function copyBuffer() {
-        const el = document.getElementById('bufferPool');
-        if (!el.value) return alert("清單為空。");
-        el.select();
-        document.execCommand('copy');
-        alert('已複製當次核准清單！');
-    }
-
-    function resetBuffer() {
-        if(confirm("確定要清空本次操作的核准暫存嗎？")) {
-            currentSessionBuffer = {};
-            allThemes.forEach(t => currentSessionBuffer[t] = []);
-            updateBufferView();
-        }
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 2500);
     }
 
     window.onload = fetchData;
