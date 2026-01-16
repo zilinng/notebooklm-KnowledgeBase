@@ -50,7 +50,7 @@
             const valEmail = document.getElementById('email').value.trim().toLowerCase();
 
             if (!valId || !valEmail) return alert("請填寫員編與 Email");
-            if (!valEmail.endsWith("@gmail.com")) return alert("❌ 僅限使用 @gmail.com 註冊");
+            if (!valEmail.endsWith("@gmail.com")) return alert("僅限使用 @gmail.com 註冊");
 
             const btn = document.getElementById('btnLogin');
             btn.disabled = true;
@@ -71,9 +71,9 @@
                 const result = await response.text();
 
                 if (result === "ERR_ID_EXISTS") {
-                    alert("❌ 員編衝突：此員編已被其他 Email 註冊過。");
+                    alert("員編衝突：此員編已被其他 Email 註冊過。");
                 } else if (result === "ERR_EMAIL_EXISTS") {
-                    alert("❌ Email 衝突：此 Email 已綁定其他員編。");
+                    alert("Email 衝突：此 Email 已綁定其他員編。");
                 } else {
                     // 登入成功，儲存資訊並跳轉
                     localStorage.setItem('user_email', valEmail);
@@ -93,3 +93,4 @@
     </script>
 </body>
 </html>
+
