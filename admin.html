@@ -151,7 +151,7 @@
             tr.innerHTML = `<td><b style="color:#1e293b; font-size:16px;">${row.employee_id}</b></td><td>${row.email}</td><td>${acts}</td>`;
             tbody.appendChild(tr);
         });
-        if (tbody.innerHTML === '') tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:50px; color:#94a3b8;">✨ 暫無新的待審核申請。</td></tr>';
+        if (tbody.innerHTML === '') tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:50px; color:#94a3b8;">暫無新的預審申請。</td></tr>';
     }
 
     function doPreApprove(rowIndex, theme) {
@@ -235,3 +235,4 @@
 
 </body>
 </html>
+
