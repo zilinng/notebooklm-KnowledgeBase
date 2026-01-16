@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>登入｜企業 AI 知識庫</title>
+    <style>
+        body { font-family: "Microsoft JhengHei", sans-serif; background: #f4f7f6; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .box { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 320px; text-align: center; }
+        h2 { margin-bottom: 25px; color: #333; letter-spacing: 1px; }
+        .input-group { text-align: left; margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; color: #555; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; transition: 0.3s; font-size: 15px; }
+        input:focus { border-color: #111; outline: none; box-shadow: 0 0 8px rgba(0,0,0,0.05); }
+        button { width: 100%; padding: 14px; background: #111; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; transition: 0.3s; }
+        button:hover { background: #333; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .footer-note { font-size: 12px; color: #999; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>AI 知識庫系統</h2>
+        
+        <div class="input-group">
+            <label class="form-label">員工編號</label>
+            <input type="text" id="employee_id" placeholder="例如 A123" autocomplete="off">
+        </div>
+        
+        <div class="input-group">
+            <label class="form-label">公司 Email</label>
+            <input type="email" id="email" placeholder="username@gmail.com" autocomplete="off">
+        </div>
+
+        <button id="btnLogin" onclick="doLogin()">登入系統</button>
+        
+        <p class="footer-note">※ 初次登入將自動建立帳號</p>
+    </div>
+
+    <script>
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbypQPLRhhOSN8hmkuemznLeqT6Kvnr5mVT492wZBf_omo064fFU0DWhbO54CPDX3w7B/exec"; 
+
+        window.onload = function() {
+            if (localStorage.getItem('user_email')) {
+                window.location.href = 'index.html';
+            }
+        };
+
+        async function doLogin() {
+            const valId = document.getElementById('employee_id').value.trim();
+            const valEmail = document.getElementById('email').value.trim().toLowerCase();
+
+            if (!valId || !valEmail) return alert("請填寫員編與 Email");
+            if (!valEmail.endsWith("@gmail.com")) return alert("❌ 僅限使用 @gmail.com 註冊");
+
+            const btn = document.getElementById('btnLogin');
+            btn.disabled = true;
+            btn.textContent = "驗證中...";
+
+            try {
+                // 登入動作：若為新用戶，GAS 會在試算表建立空紀錄
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'login',
+                        employee_id: valId,
+                        email: valEmail,
+                        categories: [] // 登入時不帶任何類別
+                    })
+                });
+
+                const result = await response.text();
+
+                if (result === "ERR_ID_EXISTS") {
+                    alert("❌ 員編衝突：此員編已被其他 Email 註冊過。");
+                } else if (result === "ERR_EMAIL_EXISTS") {
+                    alert("❌ Email 衝突：此 Email 已綁定其他員編。");
+                } else {
+                    // 登入成功，儲存資訊並跳轉
+                    localStorage.setItem('user_email', valEmail);
+                    localStorage.setItem('user_empid', valId);
+                    window.location.href = 'index.html';
+                }
+            } catch (err) {
+                // 備援機制：連線失敗仍嘗試跳轉 (適合 Demo 環境)
+                localStorage.setItem('user_email', valEmail);
+                localStorage.setItem('user_empid', valId);
+                window.location.href = 'index.html';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "登入系統";
+            }
+        }
+    </script>
+</body>
+</html>
